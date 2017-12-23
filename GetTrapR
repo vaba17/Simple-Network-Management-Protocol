@@ -1,0 +1,20 @@
+<?php
+
+
+include('config.php');
+#$db  = new PDO('sqlite:vaba.db') or die("cannot open the database");
+$i = 0;
+foreach ($db->query("SELECT * FROM vamsi") as $row)
+{
+  $i=$i+1;
+}
+if ($i>0)
+  {
+  echo $row[2], '@', $row[0], ':', $row[1];
+  }
+else
+  {
+  echo "FALSE";  
+  }
+
+?>
