@@ -1,0 +1,24 @@
+<?php
+
+include('config.php');
+#$db = new PDO('sqlite:vaba.db');
+#$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$db->exec("CREATE TABLE IF NOT EXISTS vamsi (
+                    IP TEXT , 
+                    port int , 
+                    community TEXT)");
+
+if(isset($_GET['ip']) && ($_GET['port']) && ($_GET['community']))
+{
+  $IP = $_GET['ip'];
+  $port = $_GET['port'];
+  $community = $_GET['community'];  
+  $db->exec("INSERT INTO vamsi (IP, port, community) VALUES ('$IP', '$port', '$community')"); 
+  echo "OK";
+}
+else
+{
+  echo "FALSE";
+}
+?>
