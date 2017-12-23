@@ -1,0 +1,201 @@
+#!/usr/bin/perl
+
+use DBI;
+use Net::SNMP qw(:ALL);
+use NetSNMP::TrapReceiver;
+
+
+my @hostnameR;
+my @ipR;
+my @portR;
+my $fetch_prepare;
+my $fetching;
+my $fetch;
+
+    my $dbh = DBI->connect("DBI:SQLite:vaba.db"); 
+    
+    my $vam = qq(CREATE TABLE IF NOT EXISTS krishna
+         (devicename     TEXT   PRIMARY KEY NOT NULL,
+          New_status     INT     NOT NULL,
+          present_time   INT     NOT NULL,
+          old_status     INT     NOT NULL,
+          old_time       INT     NOT NULL););
+
+    my $create = $dbh->do($vam);
+if ($create < 0){
+print $DBI::errstr;
+}
+else{
+print "created success";
+}
+
+sub my_receiver 
+{
+    print "********** PERL RECEIVED A NOTIFICATION:\n";
+    foreach my $x (@{$_[1]}) 
+    {         
+        $name=$x->[0];
+        $value=$x->[1]; 
+        if ("$name" eq ".1.3.6.1.4.1.41717.10.1")
+          {
+            @devicename = $devicename . sprintf("%s",$value);
+            @p_time = $p_time . sprintf("%s", time());  
+          }
+        if ("$name" eq ".1.3.6.1.4.1.41717.10.2")
+          {
+            @status = $status . sprintf("%s\n","$value");
+          } 
+    }
+$devicename[-1] =~ s/\"//gs;
+
+    my $fetch = qq(SELECT * from krishna;);
+    my $fetch_prepare = $dbh->prepare( $fetch );
+    my $fetching = $fetch_prepare->execute() or die $DBI::errstr;
+    my $i=0;
+    while(my @row = $fetch_prepare->fetchrow_array()) 
+      {
+        $i=$i+1;
+      }
+
+    if ($i==0)
+      {
+#---------------------------------INSERT----------------------------------
+        my $insert = qq(INSERT INTO krishna (devicename,New_status, present_time,old_status,old_time) VALUES ('$devicename[0]', '$status[0]', '$p_time[0]', '$status[0]', '$p_time[0]'));
+        my $inserting = $dbh->do($insert) or die $DBI::errstr;
+        print "First Entry\n";
+      }
+#--------------------------------------------------------------------------
+    else
+      {
+        $fetch = qq(SELECT * from krishna;);
+        $fetch_prepare = $dbh->prepare( $fetch );
+        $fetching = $fetch_prepare->execute() or die $DBI::errstr;
+        my $count = 0;
+        while(my @row = $fetch_prepare->fetchrow_array()) 
+          {    
+            my $device = $row[0];
+            my $stat = $row[1];
+            my $tim = $row[2];
+            if ($device eq $devicename[0])
+              {
+#--------------------------------UPDATE-------------------------------------
+                my $update = qq(UPDATE krishna set devicename = '$devicename[0]', New_status='$status[0]',present_time= '$p_time[0]',old_status='$stat', old_time='$tim' where devicename ='$devicename[0]';);
+                my $updating = $dbh->do($update) or die $DBI::errstr;
+                print "I am updated\n";
+#---------------------------------------------------------------------------
+              }
+            else
+              {
+                $count = $count + 1;
+              }
+           }
+        if ($count == $i)
+          {
+#---------------------------------INSERT----------------------------------
+            my $insert = qq(INSERT OR IGNORE INTO krishna (devicename,New_status, present_time,old_status,old_time) VALUES ('$devicename[0]', '$status[0]', '$p_time[0]', '$status[0]', '$p_time[0]'));
+            my $inserting = $dbh->do($insert) or die $DBI::errstr;
+            print "I am inserted in next row\n";
+#--------------------------------------------------------------------------
+          }
+      }
+
+#++++++++++++++++++++++++++++++DANGER+++++++++++++++++++++++++++++++++++++++++
+
+#--------------------TABLE KRISHNA--------------------------------------------
+$fetch = qq(SELECT * from krishna;);
+$fetch_prepare = $dbh->prepare( $fetch );
+$fetching = $fetch_prepare->execute() or die $DBI::errstr;
+$find = 0;
+while(my @row = $fetch_prepare->fetchrow_array()) 
+  {
+    if ($row[1] == 2)
+      {
+         $find = $find +1;
+      }
+  }
+print "number of rows with status=2 is:" . "$find" . "\n";
+#--------------------------------------------------------------------------------
+my @danger = ();
+if ($find >> 0)
+  {
+    my $fetch = qq(SELECT * from krishna;);
+    my $fetch_prepare = $dbh->prepare( $fetch );
+    my $fetching = $fetch_prepare->execute() or die $DBI::errstr;
+    my $lastoid = 1;
+    while(my @row = $fetch_prepare->fetchrow_array()) 
+      {      
+       if ($row[1] == 2 && $row[3] != 3)
+         {
+           my @first2 = ('.1.3.6.1.4.1.41717.30.'. (($lastoid * 4)-3) , OCTET_STRING, $row[0], '.1.3.6.1.4.1.41717.30.'.(($lastoid * 4)-2),  TIMETICKS, $row[2] , '.1.3.6.1.4.1.41717.30.'. (($lastoid * 4)-1), INTEGER, $row[3], '.1.3.6.1.4.1.41717.30.'.(($lastoid * 4)), TIMETICKS, $row[4]);    
+           push (@danger, @first2);
+           $lastoid = $lastoid +1;
+         }
+
+       }
+           
+  }
+#print "DANGER","@danger", "\n\n\n";
+#------------------------------------FAIL--------------------------------------------
+$fetch = qq(SELECT * from krishna;);
+$fetch_prepare = $dbh->prepare( $fetch );
+$fetching = $fetch_prepare->execute() or die $DBI::errstr;
+my @fail = ();
+while(my @row = $fetch_prepare->fetchrow_array()) 
+  {
+    if ($row[1] == 3)
+      {
+        my @first = ('.1.3.6.1.4.1.41717.20.1', OCTET_STRING, $row[0], '.1.3.6.1.4.1.41717.20.2', TIMETICKS, $row[2], '.1.3.6.1.4.1.41717.20.3', INTEGER, "$row[3]", '.1.3.6.1.4.1.41717.20.4', TIMETICKS, $row[4]);
+        
+        push (@fail, @first);
+      }
+  }
+#--------------------------------------------------------------------------------------
+#print "FAIL","-----","@fail","\n\n\n";
+my @result = ();
+push @result, @fail;
+push @result, @danger;
+
+print "result final","---------","@result","\n\n\n";
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#----------------------------TABLE VAMSI-----------------------------------
+$fetch = qq(SELECT * from vamsi;);
+$fetch_prepare = $dbh->prepare( $fetch );
+$fetching = $fetch_prepare->execute() or die $DBI::errstr;
+while(my @row = $fetch_prepare->fetchrow_array()) 
+  {
+    push @hostnameR, @row[0];
+    push @communityR, $row[2];
+    push @portR, $row[1];
+  }
+print "$hostnameR[-1]\n";
+print "$portR[-1]\n";
+#----------------------------------------------------------------------------
+
+#my $trap = sprintf("sudo snmptrap -v 1 -c $communityR $hostnameR:$portR @result");
+#system($trap);
+my ($session, $error) = Net::SNMP->session(
+    -hostname  => $hostnameR[-1],
+    -port      => $portR[-1],
+    -community => $communityR[-1],
+    -version => 1, 
+);
+if (!defined($session)) {
+   printf("ERROR: %s.\n", $error);
+   exit1;
+}
+else {
+print "session is created\n";
+}
+#my @string = ('.1.3.6.1.4.1.41717.10.1', OCTET_STRING, 'bth.se');
+#my @integer = ('.1.3.6.1.4.1.41717.10.1', INTEGER, 1);
+#my @unit = ('.1.3.6.1.4.1.41717.10.1', TIMETICKS, 123456);
+my $trapping = $session->trap(
+			-varbindlist => \@result
+			);
+
+if (!defined($trapping)){print "An error occurred sending the trap: " . $session->error();}
+else {print "Corect Trap is sent\n";}
+}
+NetSNMP::TrapReceiver::register("all", \& my_receiver) || 
+  warn "failed to register perl trap handler\n";
+print "I am Started\n";
