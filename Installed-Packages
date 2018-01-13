@@ -1,0 +1,11 @@
+net-snmp                  
+libperl-dev
+snmp-mibs-downloader
+snmpd
+gcc python-dev
+easysnmp
+expect
+jq
+curl
+influxdb
+grafana
