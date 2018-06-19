@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python
 
 
 import sys
@@ -16,7 +16,7 @@ def read_output(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     return iter(process.stdout.readline, "")
 
-for output in read_output(['unbuffer','/home/vamshi/Desktop/Assignments/prober', a[1], a[2], '-1'] + x):
+for output in read_output(['unbuffer','/tmp/A2/prober', a[1], a[2], '-1'] + x):
     for i in range(3,len(sys.argv)):
         oid=sys.argv[i]
         s= output.split('|') 
@@ -24,6 +24,5 @@ for output in read_output(['unbuffer','/home/vamshi/Desktop/Assignments/prober',
         stripped_line = [sa.rstrip() for sa in s]  
         timevalue=stripped_line[0]
         myrate = stripped_line[1:]
-        print (int(timevalue)), (oid), (float(myrate[i-3]))
-        #os.system("curl -i -XPOST 'http://localhost:8086/write?db=A3&u=ats&p=atslabb00&precision=s' --data-binary 'rate,oid='%s' value=%f %d'" %(oid,float(myrate[i-3]),int(timevalue)))
-        
+        #print type(int(timevalue)), type(oid), type(float(myrate[i-3]))
+        os.system("curl -i -XPOST 'http://localhost:8086/write?db=A3&u=ats&p=atslabb00&precision=s' --data-binary 'rate,oid='%s' value=%f %d'" %(oid,float(myrate[i-3]),int(timevalue)))
