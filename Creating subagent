@@ -28,13 +28,13 @@ sub vaba
 				my %file;
 				my $unixtime = time(); 
 
-				open FH, "/counters.conf" or die "Can't open FILE $!";
+				open FH, "/tmp/A1/counters.conf" or die "Can't open FILE $!";
 
 				while (<FH>)
 				{
 
-				  chomp;                                                    
-				  my ($id,$bitrate) = split(/,\s?/);                         
+				  chomp;                                                     #Removes newlines
+				  my ($id,$bitrate) = split(/,\s?/);                         # ?optional
 				  $file{$id} = $bitrate;
 				}
 				if (exists($file{$number}))
