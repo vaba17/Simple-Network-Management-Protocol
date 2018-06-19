@@ -1,20 +1,14 @@
 <?php
-
 include('config.php');
-
 #$db  = new PDO('sqlite:vaba.db') or die("cannot open the database");
-
 $i = "one";
 foreach ($db->query("SELECT * FROM krishna") as $row)
 {
   $i="two";
-  echo $row[0]. " | ".$row[1]." | ".$row[2]." | ".$row[3]." | ".$row[4]." | "."\n";
-  
+  echo $row[0]. " | ".$row[1]." | ".$row[2]." | ".$row[3]." | ".$row[4]." | "."\n";  
 }
-
 if ($i!="one")
-  {
-  
+  {  
   }
 else
   {
