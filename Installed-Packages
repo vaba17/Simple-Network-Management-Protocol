@@ -1,11 +1,13 @@
-net-snmp                  
-libperl-dev
-snmp-mibs-downloader
+net-snmp   
 snmpd
-gcc python-dev
+snmptrapd
 easysnmp
+snmp-mibs-downloader
+gcc python-dev
+libperl-dev
 expect
 jq
 curl
 influxdb
 grafana
+php-sqlite3
