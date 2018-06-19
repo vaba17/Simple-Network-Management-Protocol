@@ -1,6 +1,4 @@
 <?php
-
-
 include('config.php');
 #$db  = new PDO('sqlite:vaba.db') or die("cannot open the database");
 $i = 0;
@@ -16,5 +14,4 @@ else
   {
   echo "FALSE";  
   }
-
 ?>
